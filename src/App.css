@@ -70,12 +70,20 @@ h2 {
   line-height: 1.5;
 }
 
+.style-nav {
+  margin-bottom: 18px;
+}
+
+.mobile-topbar,
+.menu-backdrop {
+  display: none;
+}
+
 .style-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
-  margin-bottom: 18px;
 }
 
 .tab,
@@ -99,6 +107,82 @@ input[type='range'] {
   background: var(--accent);
   color: #1a1520;
   border-color: transparent;
+}
+
+.burger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #4a4158;
+  background: #2a2234;
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-align: left;
+  max-width: min(70vw, 280px);
+}
+
+.burger-lines,
+.burger-lines::before,
+.burger-lines::after {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.burger-lines {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.burger-lines::before,
+.burger-lines::after {
+  content: '';
+  position: absolute;
+  left: 0;
+}
+
+.burger-lines::before {
+  top: -5px;
+}
+
+.burger-lines::after {
+  top: 5px;
+}
+
+.burger.open .burger-lines {
+  background: transparent;
+}
+
+.burger.open .burger-lines::before {
+  top: 0;
+  transform: rotate(45deg);
+}
+
+.burger.open .burger-lines::after {
+  top: 0;
+  transform: rotate(-45deg);
+}
+
+.burger-label {
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-brand {
+  margin: 0;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.mobile-style-menu {
+  display: none;
 }
 
 .lesson-card {
@@ -441,6 +525,63 @@ input[type='range'] {
 }
 
 @media (max-width: 800px) {
+  .app {
+    padding-top: 72px;
+  }
+
+  .mobile-topbar {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background: color-mix(in srgb, var(--bg) 92%, #2a2234);
+    border-bottom: 1px solid #3a3146;
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+  }
+
+  .mobile-style-menu {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 12px 12px;
+    max-height: min(70vh, 420px);
+    overflow-y: auto;
+  }
+
+  .mobile-style-menu.open {
+    display: flex;
+  }
+
+  .mobile-style-menu .tab {
+    border-radius: 12px;
+    width: 100%;
+    text-align: left;
+  }
+
+  .menu-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    border: 0;
+    background: rgba(8, 5, 12, 0.45);
+    cursor: pointer;
+  }
+
+  .style-nav {
+    display: none;
+  }
+
   .lesson-body {
     grid-template-columns: 1fr;
   }
@@ -448,7 +589,7 @@ input[type='range'] {
 
 @media (max-width: 720px) {
   .app {
-    padding: 24px 12px 40px;
+    padding: 72px 12px 40px;
   }
 
   .lesson-head,

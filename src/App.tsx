@@ -37,6 +37,8 @@ function App() {
   const [bpm, setBpm] = useState(72)
   const [barsPerChord, setBarsPerChord] = useState(1)
 
+  const [menuOpen, setMenuOpen] = useState(false)
+
   const lesson = useMemo(
     () => LESSONS.find((item) => item.id === lessonId) ?? LESSONS[0],
     [lessonId],
@@ -186,6 +188,7 @@ function App() {
     setChordIndex(0)
     setPlayingProgression(false)
     setPlayingScale(false)
+    setMenuOpen(false)
   }
 
   const selectTonic = (note: NoteName) => {
@@ -213,7 +216,52 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app ${menuOpen ? 'menu-open' : ''}`}>
+      <header className="mobile-topbar">
+        <div className="mobile-topbar-inner">
+          <p className="mobile-brand">Harmonie Lab</p>
+          <button
+            type="button"
+            className={`burger ${menuOpen ? 'open' : ''}`}
+            aria-expanded={menuOpen}
+            aria-controls="style-menu"
+            aria-label="Choisir un style"
+            onClick={() => setMenuOpen((value) => !value)}
+          >
+            <span className="burger-lines" aria-hidden="true" />
+            <span className="burger-label">{lesson.style}</span>
+          </button>
+        </div>
+        <div
+          id="style-menu"
+          className={`mobile-style-menu ${menuOpen ? 'open' : ''}`}
+          role="tablist"
+          aria-label="Styles"
+        >
+          {LESSONS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={item.id === lesson.id}
+              className={`tab ${item.id === lesson.id ? 'active' : ''}`}
+              onClick={() => selectLesson(item.id)}
+            >
+              {item.style}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {menuOpen ? (
+        <button
+          type="button"
+          className="menu-backdrop"
+          aria-label="Fermer le menu"
+          onClick={() => setMenuOpen(false)}
+        />
+      ) : null}
+
       <header className="hero">
         <p className="eyebrow">Piano • harmonie • improvisation</p>
         <h1>Harmonie Lab</h1>
@@ -222,20 +270,22 @@ function App() {
         </p>
       </header>
 
-      <div className="style-tabs" role="tablist" aria-label="Styles">
-        {LESSONS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            role="tab"
-            aria-selected={item.id === lesson.id}
-            className={`tab ${item.id === lesson.id ? 'active' : ''}`}
-            onClick={() => selectLesson(item.id)}
-          >
-            {item.style}
-          </button>
-        ))}
-      </div>
+      <nav className="style-nav" aria-label="Styles">
+        <div className="style-tabs" role="tablist">
+          {LESSONS.map((item) => (
+            <button
+              key={`desktop-${item.id}`}
+              type="button"
+              role="tab"
+              aria-selected={item.id === lesson.id}
+              className={`tab ${item.id === lesson.id ? 'active' : ''}`}
+              onClick={() => selectLesson(item.id)}
+            >
+              {item.style}
+            </button>
+          ))}
+        </div>
+      </nav>
 
       <section className="lesson-card">
         <div className="lesson-head">
