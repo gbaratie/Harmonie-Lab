@@ -1,14 +1,14 @@
 {
-  "name": "piano-helper",
+  "name": "harmonie-lab",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "homepage": "https://gbaratie.github.io/Piano-helper/",
+  "homepage": "https://gbaratie.github.io/Harmonie-Lab/",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview --base /Piano-helper/"
+    "preview": "vite preview --base /Harmonie-Lab/"
   },
   "dependencies": {
     "react": "^19.2.8",

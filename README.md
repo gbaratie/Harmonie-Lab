@@ -2,7 +2,7 @@
 
 Application React (Vite) pour s'entraîner à l'impro au piano : progressions, gammes et clavier virtuel.
 
-Site prévu pour GitHub Pages : https://gbaratie.github.io/Piano-helper/
+Site prévu pour GitHub Pages : https://gbaratie.github.io/Harmonie-Lab/
 
 ## Développement
 
