@@ -22,11 +22,15 @@ import './App.css'
 
 const KEYS = buildKeys()
 
+type View = 'home' | 'studio'
+type StudioPanel = 'chords' | 'scale'
+
 function scaleTitle(lesson: Lesson, tonicPc: number): string {
   return `${latinName(tonicPc)} ${lesson.scaleName}`
 }
 
 function App() {
+  const [view, setView] = useState<View>('home')
   const [lessonId, setLessonId] = useState(LESSONS[0].id)
   const [tonic, setTonic] = useState<NoteName>('C')
   const [chordIndex, setChordIndex] = useState(0)
@@ -38,6 +42,8 @@ function App() {
   const [barsPerChord, setBarsPerChord] = useState(1)
 
   const [menuOpen, setMenuOpen] = useState(false)
+  const [tipsOpen, setTipsOpen] = useState(false)
+  const [studioPanel, setStudioPanel] = useState<StudioPanel>('chords')
 
   const lesson = useMemo(
     () => LESSONS.find((item) => item.id === lessonId) ?? LESSONS[0],
@@ -101,6 +107,9 @@ function App() {
   )
 
   useEffect(() => {
+    if (view !== 'studio') {
+      return
+    }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) {
         return
@@ -115,7 +124,7 @@ function App() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [pressScaleKey])
+  }, [pressScaleKey, view])
 
   useEffect(() => {
     if (!playingProgression) {
@@ -183,19 +192,40 @@ function App() {
     }
   }, [playingScale, scaleRun, bpm, flashKey])
 
+  const stopPlayback = () => {
+    setPlayingProgression(false)
+    setPlayingScale(false)
+  }
+
+  const openStudio = (id: string) => {
+    setLessonId(id)
+    setChordIndex(0)
+    stopPlayback()
+    setTipsOpen(false)
+    setMenuOpen(false)
+    setStudioPanel('chords')
+    setView('studio')
+  }
+
+  const goHome = () => {
+    stopPlayback()
+    setMenuOpen(false)
+    setTipsOpen(false)
+    setView('home')
+  }
+
   const selectLesson = (id: string) => {
     setLessonId(id)
     setChordIndex(0)
-    setPlayingProgression(false)
-    setPlayingScale(false)
+    stopPlayback()
+    setTipsOpen(false)
     setMenuOpen(false)
   }
 
   const selectTonic = (note: NoteName) => {
     setTonic(note)
     setChordIndex(0)
-    setPlayingProgression(false)
-    setPlayingScale(false)
+    stopPlayback()
   }
 
   const onChordClick = (index: number) => {
@@ -215,26 +245,154 @@ function App() {
     setPlayingScale((value) => !value)
   }
 
+  const renderChordButtons = () => (
+    <div className="chord-row">
+      {lesson.chords.map((chord, index) => {
+        const label = transposedChordLabel(
+          chord,
+          tonicPc,
+          latinName,
+          (pc) => NOTE_NAMES[wrapPc(pc)],
+        )
+        return (
+          <button
+            key={`${chord.symbol}-${index}`}
+            type="button"
+            className={`chord-btn ${index === safeChordIndex ? 'active' : ''}`}
+            onClick={() => onChordClick(index)}
+          >
+            {label.symbol}
+          </button>
+        )
+      })}
+    </div>
+  )
+
+  const renderTonicSelect = () => (
+    <label className="field">
+      Tonique
+      <select
+        value={tonic}
+        onChange={(event) => selectTonic(event.target.value as NoteName)}
+      >
+        {ROOT_OPTIONS.map((note, index) => (
+          <option key={note} value={note}>
+            {LATIN_NAMES[index]}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+
+  const renderBpm = () => (
+    <label className="field bpm-field">
+      BPM
+      <div className="bpm-row">
+        <input
+          type="range"
+          min={50}
+          max={140}
+          value={bpm}
+          onChange={(event) => setBpm(Number(event.target.value))}
+        />
+        <span>{bpm}</span>
+      </div>
+    </label>
+  )
+
+  const renderTips = () => (
+    <div className="tips-block">
+      <button
+        type="button"
+        className={`ghost-btn ${tipsOpen ? 'open' : ''}`}
+        aria-expanded={tipsOpen}
+        onClick={() => setTipsOpen((value) => !value)}
+      >
+        Conseils {tipsOpen ? '−' : '+'}
+      </button>
+      {tipsOpen ? (
+        <ol className="tips">
+          {lesson.tips.map((tip) => (
+            <li key={tip}>{tip}</li>
+          ))}
+        </ol>
+      ) : null}
+    </div>
+  )
+
+  if (view === 'home') {
+    return (
+      <div className="app home">
+        <section className="home-screen">
+          <header className="home-hero">
+            <p className="eyebrow">Piano • harmonie • improvisation</p>
+            <h1>Harmonie Lab</h1>
+            <p className="lede">Choisis un style pour improviser.</p>
+          </header>
+
+          <div className="style-grid" role="list">
+            {LESSONS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className="style-card"
+                role="listitem"
+                onClick={() => openStudio(item.id)}
+              >
+                <span className="style-card-label">{item.style}</span>
+                <span className="style-card-title">{item.title}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+    )
+  }
+
   return (
-    <div className={`app ${menuOpen ? 'menu-open' : ''}`}>
-      <header className="mobile-topbar">
-        <div className="mobile-topbar-inner">
-          <p className="mobile-brand">Harmonie Lab</p>
+    <div className={`app studio ${menuOpen ? 'menu-open' : ''}`}>
+      <header className="studio-topbar">
+        <div className="studio-topbar-inner">
+          <button type="button" className="brand-link" onClick={goHome}>
+            Harmonie Lab
+          </button>
+
+          <p className="topbar-style mobile-only" aria-live="polite">
+            {lesson.style}
+          </p>
+
+          <nav className="style-nav desktop-only" aria-label="Styles">
+            <div className="style-tabs" role="tablist">
+              {LESSONS.map((item) => (
+                <button
+                  key={`desktop-${item.id}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={item.id === lesson.id}
+                  className={`tab ${item.id === lesson.id ? 'active' : ''}`}
+                  onClick={() => selectLesson(item.id)}
+                >
+                  {item.style}
+                </button>
+              ))}
+            </div>
+          </nav>
+
           <button
             type="button"
-            className={`burger ${menuOpen ? 'open' : ''}`}
+            className={`burger mobile-only ${menuOpen ? 'open' : ''}`}
             aria-expanded={menuOpen}
             aria-controls="style-menu"
             aria-label="Choisir un style"
             onClick={() => setMenuOpen((value) => !value)}
           >
             <span className="burger-lines" aria-hidden="true" />
-            <span className="burger-label">{lesson.style}</span>
           </button>
         </div>
+
         <div
           id="style-menu"
-          className={`mobile-style-menu ${menuOpen ? 'open' : ''}`}
+          className={`mobile-style-menu mobile-only ${menuOpen ? 'open' : ''}`}
           role="tablist"
           aria-label="Styles"
         >
@@ -262,159 +420,103 @@ function App() {
         />
       ) : null}
 
-      <header className="hero">
-        <p className="eyebrow">Piano • harmonie • improvisation</p>
-        <h1>Harmonie Lab</h1>
-        <p className="lede">
-          Choisis un style et une tonique, puis improvise sur la progression.
-        </p>
-      </header>
-
-      <nav className="style-nav" aria-label="Styles">
-        <div className="style-tabs" role="tablist">
-          {LESSONS.map((item) => (
-            <button
-              key={`desktop-${item.id}`}
-              type="button"
-              role="tab"
-              aria-selected={item.id === lesson.id}
-              className={`tab ${item.id === lesson.id ? 'active' : ''}`}
-              onClick={() => selectLesson(item.id)}
-            >
-              {item.style}
-            </button>
-          ))}
-        </div>
+      <nav className="mobile-panels mobile-only" aria-label="Vues studio">
+        <button
+          type="button"
+          className={`panel-tab ${studioPanel === 'chords' ? 'active' : ''}`}
+          aria-pressed={studioPanel === 'chords'}
+          onClick={() => setStudioPanel('chords')}
+        >
+          Accords
+        </button>
+        <button
+          type="button"
+          className={`panel-tab ${studioPanel === 'scale' ? 'active' : ''}`}
+          aria-pressed={studioPanel === 'scale'}
+          onClick={() => setStudioPanel('scale')}
+        >
+          Gamme
+        </button>
       </nav>
 
-      <section className="lesson-card">
-        <div className="lesson-head">
+      <div className="studio-board">
+        <header className="studio-intro desktop-only">
           <div>
             <h2>{lesson.title}</h2>
             <p>{lesson.description}</p>
           </div>
-          <label>
-            Tonique
-            <select
-              value={tonic}
-              onChange={(event) =>
-                selectTonic(event.target.value as NoteName)
-              }
-            >
-              {ROOT_OPTIONS.map((note, index) => (
-                <option key={note} value={note}>
-                  {note} · {LATIN_NAMES[index]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+          {renderTips()}
+        </header>
 
-        <div className="lesson-body">
-          <div className="progression">
-            <p className="panel-title">Progression</p>
-            <div className="chord-row">
-              {lesson.chords.map((chord, index) => {
-                const label = transposedChordLabel(
-                  chord,
-                  tonicPc,
-                  latinName,
-                  (pc) => NOTE_NAMES[wrapPc(pc)],
-                )
-                return (
-                  <button
-                    key={`${chord.symbol}-${index}`}
-                    type="button"
-                    className={`chord-btn ${index === safeChordIndex ? 'active' : ''}`}
-                    onClick={() => onChordClick(index)}
-                  >
-                    <strong>{label.symbol}</strong>
-                    <span>{label.nameFr}</span>
-                  </button>
-                )
-              })}
-            </div>
+        <section
+          className={`studio-panel panel-chords ${studioPanel === 'chords' ? 'is-active' : ''}`}
+        >
+          <div className="panel-controls">
+            {renderTonicSelect()}
+            <label className="field">
+              Mesures
+              <select
+                value={barsPerChord}
+                onChange={(event) =>
+                  setBarsPerChord(Number(event.target.value))
+                }
+              >
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              className="play-btn"
+              onClick={toggleProgression}
+            >
+              {playingProgression ? 'Pause' : 'Boucle'}
+            </button>
+            {renderBpm()}
           </div>
 
-          <aside className="scale-panel">
-            <p className="panel-title">Gamme pour improviser</p>
+          <div className="panel-body">
+            {renderChordButtons()}
+            <div className="tips-mobile mobile-only">{renderTips()}</div>
+          </div>
+
+          <Piano
+            title="Accords"
+            mode="chord"
+            keys={KEYS}
+            highlightedMidis={chordVoicing}
+            activeMidis={chordActiveMidis}
+            onPress={(midi) => void pressChordKey(midi)}
+          />
+        </section>
+
+        <section
+          className={`studio-panel panel-scale ${studioPanel === 'scale' ? 'is-active' : ''}`}
+        >
+          <div className="panel-controls">
+            {renderTonicSelect()}
+            <button type="button" className="play-btn" onClick={toggleScale}>
+              {playingScale ? 'Pause' : 'Jouer'}
+            </button>
+            {renderBpm()}
+          </div>
+
+          <div className="panel-body">
             <p className="scale-name">{scaleTitle(lesson, tonicPc)}</p>
             <p className="scale-notes">{scaleNoteLabels.join(' · ')}</p>
-            <p className="panel-title">Conseils</p>
-            <ol className="tips">
-              {lesson.tips.map((tip) => (
-                <li key={tip}>{tip}</li>
-              ))}
-            </ol>
-          </aside>
-        </div>
+            <div className="tips-mobile mobile-only">{renderTips()}</div>
+          </div>
 
-        <div className="transport">
-          <button
-            type="button"
-            className="play-chord"
-            onClick={toggleProgression}
-          >
-            {playingProgression ? 'Pause progression' : 'Boucle progression'}
-          </button>
-          <button
-            type="button"
-            className="play-chord ghost"
-            onClick={toggleScale}
-          >
-            {playingScale ? 'Pause gamme' : 'Jouer la gamme'}
-          </button>
-          <label>
-            BPM
-            <input
-              type="range"
-              min={50}
-              max={140}
-              value={bpm}
-              onChange={(event) => setBpm(Number(event.target.value))}
-            />
-            <span>{bpm}</span>
-          </label>
-          <label>
-            Mesures / accord
-            <select
-              value={barsPerChord}
-              onChange={(event) => setBarsPerChord(Number(event.target.value))}
-            >
-              <option value={1}>1</option>
-              <option value={2}>2</option>
-            </select>
-          </label>
-        </div>
-      </section>
-
-      <Piano
-        title="Clavier accords"
-        mode="chord"
-        keys={KEYS}
-        highlightedMidis={chordVoicing}
-        activeMidis={chordActiveMidis}
-        onPress={(midi) => void pressChordKey(midi)}
-        caption="Deux claviers séparés : accords et gamme. La boucle enchaîne la progression ; un clic sur un accord ne joue que celui-là. Tu peux aussi faire défiler la gamme note par note."
-      />
-
-      <Piano
-        title="Clavier gamme"
-        mode="scale"
-        keys={KEYS}
-        highlightedMidis={scaleRun}
-        activeMidis={scaleActiveMidis}
-        onPress={(midi) => void pressScaleKey(midi)}
-      />
-
-      <footer className="practice">
-        <p>
-          <strong>Routine de départ :</strong> 5 min main gauche seule → 5 min
-          accords + écoute → 5 min d’improvisation main droite. Commence très
-          lentement et laisse de l’espace.
-        </p>
-        <p className="quote">« Moins de notes, plus d’émotions. »</p>
-      </footer>
+          <Piano
+            title="Gamme"
+            mode="scale"
+            keys={KEYS}
+            highlightedMidis={scaleRun}
+            activeMidis={scaleActiveMidis}
+            onPress={(midi) => void pressScaleKey(midi)}
+          />
+        </section>
+      </div>
     </div>
   )
 }
