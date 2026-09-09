@@ -526,8 +526,10 @@ input[type='range'] {
 }
 
 .black-slot {
+  /* Must match .key.white horizontal margins so black keys don't drift right. */
   flex: 0 0 var(--key-w);
   width: var(--key-w);
+  margin: 0 1px;
   position: relative;
   height: var(--black-key-h);
 }
